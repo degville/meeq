@@ -616,7 +616,7 @@ fun void overlayGesturePage8(){			// Overlay: cc2
 fun void interpretGesture(int x, int y, int state){		// Key control while in Overlay mode
 
 	/// Deal with overlay gestures first
-	if (overlay_flag == 1){
+	if (overlay_flag == 1){					// Global options
 		overlayMode1(x,y,state);
 	} else if (overlay_flag == 4){
 		overlayMode4(x,y,state);			// Step velocity
