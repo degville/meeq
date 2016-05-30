@@ -90,17 +90,17 @@
 [maxx-6, 0]   @=> int key_layer_10[];
 [maxx-5, 0]   @=> int key_layer_11[];
 
-// Default values for oscillators - starting value and freq (Hz)
-50 => int glfo_sample_latency;
-0 => int glfo1;		
-0 => int glfo1_t;
-0.5 => float glfo1_f;
-
-int lfo1_table[maxx];
+// LFO Modulation layer - global values
+50 => int glfo_sample_latency;	// LFO latency for sampling - affects display update
+08  => int maxlfo;				// Max number of LFOs
+modLFO lfo[maxlfo];				// Create  LFOs
 
 /// free-running oscillators
-spork ~lfo1();
-spork ~lfo_sampler();
+for (0 => int i; i<maxlfo; i++){
+	spork ~lfo_generator(i);
+}
+
+spork ~lfo_sampler(maxlfo);
 //spork ~lfo_backgroundUpdate();
 
 /// Scales Object
@@ -187,6 +187,20 @@ recv.event(prefix+"/enc", "ii") @=> OscEvent enc;
 10 => grid[9].channel;
 11 => grid[10].channel;
 12 => grid[11].channel;
+
+///INITIAL LFOS FOR EACH CHANNEL
+0 => grid[0].lfo;
+1 => grid[1].lfo;
+2 => grid[2].lfo;
+3 => grid[3].lfo;
+4 => grid[4].lfo;
+5 => grid[5].lfo;
+6 => grid[6].lfo;
+7 => grid[7].lfo;
+0 => grid[8].lfo;
+1 => grid[9].lfo;
+2 => grid[10].lfo;
+3 => grid[11].lfo;
 
 /// INITIAL LAYER SCALES
 1 => grid[0].scale; 
@@ -556,79 +570,11 @@ fun void overlayGesturePage5(){			// Overlay: per-step LFO modulation amount
 		
 	while (overlay_flag==5){
 	
-		lfoDisplayUpdate();
+	//spork ~lfoDisplayUpdate();
+	lfoDisplayUpdate();
 	
-		20::ms => now;
+	20::ms => now;
 	
-	}
-}
-
-fun void lfoDisplayEdit(){
-	
-	0 => int binary_send;
-	0.001953125 => float step_multiplier; // 0.001953125 * 512 = 1
-		
-	for (0=> int x; x<maxx; x++){				
-		Math.pow(2,(lfo1_table[x]/(1024/maxy))) $ int +=> binary_send;
-		1 -=> binary_send;			// Reverse display 
-		0xff ^=> binary_send; 		// so that waveform appears correctly		
-		columnSet(x, binary_send);
-		0 => binary_send;
-	}
-
-}
-
-fun void lfoDisplayUpdate(){
-	
-	0 => int binary_send;
-	0.001953125 => float step_multiplier; // 0.001953125 * 512 = 1
-		
-	for (0=> int x; x<maxx; x++){
-		for (0=> int y; y<maxy; y++){			
-			if (grid[current_matrix].matrix[x][y]){					
-				if (lfo1_table[x]>512){		// If LFO is positive
-					Math.pow(2,(y+grid[current_matrix].lfo1_value[x])) $ int +=> binary_send;										
-				} else {					// If LFO is negative
-					Math.pow(2,(y-grid[current_matrix].lfo1_value[x])) $ int +=> binary_send;
-				}
-			}  
-		}
-		columnSet(x, binary_send);
-		0 => binary_send;
-	}
-}
-
-fun void lfo_backgroundUpdate(){
-	
-	0.001953125 => float step_multiplier; // 0.001953125 * 512 = 1
-	
-	while (true){
-		
-		for (0=> int x; x<maxx; x++){
-			for (0=> int y; y<maxy; y++){
-			
-				for (0=> int l; l<layers; l++){
-			
-					if (grid[l].matrix[x][y]){
-					
-						if (lfo1_table[x]>512){		// If LFO is positive
-							lfo1_table[x] - 512 => int lfo_value;					
-							lfo_value * (step_multiplier*grid[l].lfo_steps[x]) => float multiplier;
-							multiplier $ int => int final_val;
-							final_val => grid[l].lfo1_value[x];										
-						} else {					// If LFO is negative
-							lfo1_table[x] - 511 => int lfo_value;
-							lfo_value * -1 => lfo_value;					
-							lfo_value * (step_multiplier*grid[l].lfo_steps[x]) => float multiplier;
-							multiplier $ int => int final_val;
-							final_val => grid[l].lfo1_value[x];
-						}
-					}	  
-				}
-			}
-		}
-		
-		20::ms => now;
 	}
 }
 
@@ -774,10 +720,10 @@ fun void overlayMode2(int x, int y, int state){
 			0 => gesture_flag;
 			
 	} else if (y == key_mute[1]){		/// ALTER LFO FREQUENCY
-		  	((x+1.0)/5.0)*(60.0/bpm) => glfo1_f;
+		  	(((x+1)*2)/5.0)*(60.0/bpm) => lfo[current_matrix].frequency;
 
 	} else if (y == key_swing[1]){		/// ALTER LFO TYPE
-			x => glfo1_t;
+			x => lfo[current_matrix].type;
 	}			
 }
 
@@ -955,6 +901,81 @@ fun void standardGestureMode(int x, int y, int state){
 
 		
 }
+
+
+fun void lfoDisplayEdit(){
+	
+	0 => int binary_send;
+	0.001953125 => float step_multiplier; // 0.001953125 * 512 = 1
+		
+	for (0=> int x; x<maxx; x++){				
+		Math.pow(2,(lfo[grid[current_matrix].lfo].value_table[x]/(1024/maxy))) $ int +=> binary_send;
+		1 -=> binary_send;			// Reverse display 
+		0xff ^=> binary_send; 		// so that waveform appears correctly		
+		columnSet(x, binary_send);
+		0 => binary_send;
+	}
+
+}
+
+fun void lfoDisplayUpdate(){
+	
+	0 => int binary_send;
+	0.001953125 => float step_multiplier; // 0.001953125 * 512 = 1
+		
+	for (0=> int x; x<maxx; x++){
+		for (0=> int y; y<maxy; y++){			
+			if (grid[current_matrix].matrix[x][y]){					
+				if (lfo[grid[current_matrix].lfo].value_table[x]>512){		// If LFO is positive
+					Math.pow(2,(y+grid[current_matrix].lfo_value[x])) $ int +=> binary_send;										
+				} else {					// If LFO is negative
+					Math.pow(2,(y-grid[current_matrix].lfo_value[x])) $ int +=> binary_send;
+				}
+			}  
+		}
+		columnSet(x, binary_send);
+		0 => binary_send;
+	}
+}
+
+fun void lfo_backgroundUpdate(){
+	
+	0.001953125 => float step_multiplier; // 0.001953125 * 512 = 1
+	
+	while (true){
+		
+		for (0=> int x; x<maxx; x++){
+			for (0=> int y; y<maxy; y++){
+			
+				for (0=> int l; l<layers; l++){
+			
+					for (0=> int o; o<maxlfo; o++){
+			
+						if (grid[l].matrix[x][y]){
+					
+							if (lfo[o].value_table[x]>512){		// If LFO is positive
+								lfo[o].value_table[x] - 512 => int lfo_value;					
+								lfo_value * (step_multiplier*grid[l].lfo_steps[x]) => float multiplier;
+								multiplier $ int => int final_val;
+								final_val => grid[l].lfo_value[x];										
+							} else {					// If LFO is negative
+								lfo[o].value_table[x] - 511 => int lfo_value;
+								lfo_value * -1 => lfo_value;					
+								lfo_value * (step_multiplier*grid[l].lfo_steps[x]) => float multiplier;
+								multiplier $ int => int final_val;
+								final_val => grid[l].lfo_value[x];
+							}
+						}
+						
+					}	  
+				}
+			}
+		}
+		
+		20::ms => now;
+	}
+}
+
 
 fun void layerVolume(int matrix, int x){
 
@@ -1161,10 +1182,10 @@ fun void playStep(int matrix, int step) {
             grid[matrix].transpose * grid[matrix].transpose_step + note_number => note_number;
 
 			/// LFO modulation onto note number
-			if (lfo1_table[step]>512){
-				grid[matrix].lfo1_value[step] -=> note_number;
+			if (lfo[grid[matrix].lfo].value_table[step]>512){
+				grid[matrix].lfo_value[step] -=> note_number;
 			} else {
-				grid[matrix].lfo1_value[step] +=> note_number;
+				grid[matrix].lfo_value[step] +=> note_number;
 			}
 			
 			/// Send MIDI Controller date for step
@@ -1189,10 +1210,10 @@ fun void playStep(int matrix, int step) {
             grid[matrix].transpose * grid[matrix].transpose_step + note_number => note_number;
 
 			/// LFO modulation onto note number
-			if (lfo1_table[step]>512){
-				grid[matrix].lfo1_value[step] -=> note_number;
+			if (lfo[grid[matrix].lfo].value_table[step]>512){
+				grid[matrix].lfo_value[step] -=> note_number;
 			} else {
-				grid[matrix].lfo1_value[step] +=> note_number;
+				grid[matrix].lfo_value[step] +=> note_number;
 			}
 
 			/// Send MIDI Controller date for step
@@ -1217,10 +1238,10 @@ fun void playStep(int matrix, int step) {
             grid[matrix].transpose * grid[matrix].transpose_step + note_number => note_number;
             
 			/// LFO modulation onto note number
-			if (lfo1_table[step]>512){
-				grid[matrix].lfo1_value[step] -=> note_number;
+			if (lfo[grid[matrix].lfo].value_table[step]>512){
+				grid[matrix].lfo_value[step] -=> note_number;
 			} else {
-				grid[matrix].lfo1_value[step] +=> note_number;
+				grid[matrix].lfo_value[step] +=> note_number;
 			}
 
 			/// Send MIDI Controller date for step
@@ -1605,83 +1626,83 @@ fun void readConfig(){
 	}
 }
 
-fun int lfo1(){
+fun int lfo_generator(int which_lfo){
 	
 	1 => int direction;
 	
 	while (true){
 
-		if (glfo1_t==0){			/// Sine function
+		if (lfo[which_lfo].type==0){			/// Sine function
 
 			for (0=> int i; i<900; i++){
 		
-				((Math.sin ((i/10)*3.14159265/180)) * 512 + 512-1) $ int => glfo1;
-				1/glfo1_f => float div_click;
+				((Math.sin ((i/10)*3.14159265/180)) * 512 + 512-1) $ int => lfo[which_lfo].value;
+				1/lfo[which_lfo].frequency => float div_click;
 				div_click*0.27777777::ms => now;
 			}
 	
 			for (900=> int i; i>0; i--){
 		
-				((Math.sin ((i/10)*3.14159265/180)) * 512 + 512-1) $ int => glfo1;
-				1/glfo1_f => float div_click;
+				((Math.sin ((i/10)*3.14159265/180)) * 512 + 512-1) $ int => lfo[which_lfo].value;
+				1/lfo[which_lfo].frequency => float div_click;
 				div_click*0.27777777::ms => now;
 			}
 		
 			for (0=> int i; i<900; i++){
 		
-				((Math.sin ((i/10)* -3.14159265/180)) * 512 + 512) $ int => glfo1;
-				1/glfo1_f => float div_click;
+				((Math.sin ((i/10)* -3.14159265/180)) * 512 + 512) $ int => lfo[which_lfo].value;
+				1/lfo[which_lfo].frequency => float div_click;
 				div_click*0.27777777::ms => now;
 			}
 		
 			for (900=> int i; i>0; i--){
 		
-				((Math.sin ((i/10)* -3.14159265/180)) * 512 + 512) $ int => glfo1;
-				1/glfo1_f => float div_click;
+				((Math.sin ((i/10)* -3.14159265/180)) * 512 + 512) $ int => lfo[which_lfo].value;
+				1/lfo[which_lfo].frequency => float div_click;
 				div_click*0.27777777::ms => now;
 
 			}
-		} else if (glfo1_t==1) {	/// Triangle function
+		} else if (lfo[which_lfo].type==1) {	/// Triangle function
 
 				if (direction){
 
-					if (glfo1 < 1023){
-						glfo1 + 1 => glfo1;
+					if (lfo[which_lfo].value < 1023){
+						lfo[which_lfo].value + 1 => lfo[which_lfo].value;
 					} else {
 						0 => direction;			
 					}
 				} else {
-					if (glfo1 > 0){
-						glfo1 - 1 => glfo1;
+					if (lfo[which_lfo].value > 0){
+						lfo[which_lfo].value - 1 => lfo[which_lfo].value;
 					} else {
 						1 => direction;
 
 					}			
 				}
 
-			1/glfo1_f => float div_click;
+			1/lfo[which_lfo].frequency => float div_click;
 			div_click * 0.48828125::ms => now;
 	
-		} else if (glfo1_t==2) {	/// Sawtooth function
+		} else if (lfo[which_lfo].type==2) {	/// Sawtooth function
 			
-			if (glfo1 < 1023){
-					glfo1 + 1 => glfo1;
+			if (lfo[which_lfo].value < 1023){
+					lfo[which_lfo].value + 1 => lfo[which_lfo].value;
 				} else {
-					0 => glfo1;			
+					0 => lfo[which_lfo].value;			
 				}
 
-			1/glfo1_f => float div_click;
+			1/lfo[which_lfo].frequency => float div_click;
 			div_click * 0.9765625::ms => now;
 			
-		} else if (glfo1_t==3) {	/// Reverse Sawtooth function
+		} else if (lfo[which_lfo].type==3) {	/// Reverse Sawtooth function
 
-				if (glfo1 > 0){
-						glfo1 - 1 => glfo1;
+				if (lfo[which_lfo].value > 0){
+						lfo[which_lfo].value - 1 => lfo[which_lfo].value;
 					} else {
-						1023 => glfo1;			
+						1023 => lfo[which_lfo].value;			
 					}
 
-				1/glfo1_f => float div_click;
+				1/lfo[which_lfo].frequency => float div_click;
 				div_click * 0.9765625::ms => now;
 
 			} else {				/// Square function
@@ -1691,58 +1712,63 @@ fun int lfo1(){
 			}
 
 			if (direction < 1000){
-				1023 => glfo1;
+				1023 => lfo[which_lfo].value;
 
 			} else {
-				0 => glfo1;			
+				0 => lfo[which_lfo].value;			
 			}
 
 			direction + 1 => direction;
 
-			1/glfo1_f => float div_click;
+			1/lfo[which_lfo].frequency => float div_click;
 			div_click * 0.5::ms => now;
 			
 		}
 	}	
 }
 
-fun void lfo_sampler(){
+fun void lfo_sampler(int maxlfo){
 	
 	0.001953125 => float step_multiplier; // 0.001953125 * 512 = 1
 	
 	while (true){
 		
 		for ((maxx-1) => int i; i>0; i--){
-			lfo1_table[i-1] => lfo1_table[i];
+			for (0=> int o; o<maxlfo; o++){
+				lfo[o].value_table[i-1] => lfo[o].value_table[i];
+			}
 		}
 		
-		glfo1 => lfo1_table[0];
+		for (0=> int o; o<maxlfo; o++){
+			lfo[o].value => lfo[o].value_table[0];
+		}
 		
 		for (0=> int x; x<maxx; x++){
+			
 			for (0=> int y; y<maxy; y++){
 			
 				for (0=> int l; l<layers; l++){
-			
+
 					if (grid[l].matrix[x][y]){
-					
-						if (lfo1_table[x]>512){		// If LFO is positive
-							lfo1_table[x] - 512 => int lfo_value;					
+				
+						if (lfo[grid[l].lfo].value_table[x]>512){		// If LFO is positive
+							lfo[grid[l].lfo].value_table[x] - 512 => int lfo_value;					
 							lfo_value * (step_multiplier*grid[l].lfo_steps[x]) => float multiplier;
 							multiplier $ int => int final_val;
-							final_val => grid[l].lfo1_value[x];										
+							final_val => grid[l].lfo_value[x];									
 						} else {					// If LFO is negative
-							lfo1_table[x] - 511 => int lfo_value;
+							lfo[grid[l].lfo].value_table[x]  - 511 => int lfo_value;
 							lfo_value * -1 => lfo_value;					
 							lfo_value * (step_multiplier*grid[l].lfo_steps[x]) => float multiplier;
 							multiplier $ int => int final_val;
-							final_val => grid[l].lfo1_value[x];
+							final_val => grid[l].lfo_value[x];
 						}
-					}	  
+					}		  
 				}
 			}
 		}
-		(glfo_sample_latency/glfo1_f)::ms => now;
-
+		//(glfo_sample_latency/glfo1_f)::ms => now;
+		glfo_sample_latency::ms => now;
 	}
 		
 }
@@ -1752,7 +1778,8 @@ fun void octoModulate(){
 	
 	while (true){
 			//octSend(glfo8,glfo7,glfo6,glfo5,glfo4,glfo3,glfo2,glfo1);
-			octSend(glfo1,glfo1,glfo1,glfo1,glfo1,glfo1,glfo1,glfo1);
+			// FIX: check for less than 8 LFOs!!
+			octSend(lfo[7].value,lfo[6].value,lfo[5].value,lfo[4].value,lfo[3].value,lfo[2].value,lfo[1].value,lfo[0].value);
 			goct_lat::ms => now; // Octomod update frequency	
 	}
 
@@ -1773,6 +1800,16 @@ fun void octSend(int oa, int ob, int oc, int od, int oe, int of, int og, int oh)
 	oh => oemit.addInt;
 
 }
+
+class modLFO{
+
+	0 => int value;		
+	0 => int type;
+	0.5 => float frequency;
+	int value_table[maxx];	
+	
+}
+
 
 public class noteGrid{
 
@@ -1795,8 +1832,10 @@ public class noteGrid{
 	0			=> int swing;
 	0			=> int swing_state;
 	0			=> int swing_sync;		/// This is the previous swing value
+	0			=> int lfo;				/// Which LFO to modulate the layer
+	
 	dur tick_time;
-	int lfo1_value[maxx];
+	int lfo_value[maxx];
 
 	int velocity_steps[maxx];	
 	for (0=> int i; i < maxx; i++)
