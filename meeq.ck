@@ -27,7 +27,7 @@
 // 2. Copy the device name within the double quotes into following line:
 //"PLACE DEVICE NAME HERE" => string midioutstring; 
 //"USB Midi Cable" => string midioutstring;
-"IAC Driver IAC 1" => string midioutstring;
+"IAC IAC 1" => string midioutstring;
 //"BCF2000 Port 3"  => string midioutstring;
 //
 // 3. Define the dimensions of your monome. Maxx holds the width, while maxy hold the height
@@ -42,16 +42,27 @@
 
 //
 // 4. Set the global tempo for meeq by changing 120 in the following line:
-96 => int bpm;
+102 => int bpm;
 //
 // 5. Run MonomeSerial and set the prefix to /meeq
 //
 //
-1 => int enable_octomod;
 //
 // 6. Type 'chuck meeq_v1.ck' on the command-line to run the sequencer.
 //
 // END OF QUICK SETUP INSTRUCTIONS
+
+
+/// Enable or disable Octomod support
+0 => int enable_octomod;
+
+/// Enable or disable voltage pulse for CV sync
+0 => int enable_clockpulse;
+
+/// Enable or disable a layer's notes triggering voltage pulse
+/// This defaults to layer nine
+0 => int enable_layerpulse;
+8 => int pulse_layer;
 
 /// Button Configuration (x, y)
 [maxx-2,0] @=> int key_random[];
@@ -282,7 +293,8 @@ clearDisplay();
 bpm/2   => float tick;
 minute/tick => dur beat;
 
-//spork ~pulseMidiClock(); // MIDI CLOCK NOT WORKING
+spork ~pulseMidiClock(); // MIDI CLOCK NOT WORKING
+midiStartClock();
 
 spork ~keyPress();
 
@@ -311,6 +323,7 @@ writeConfig();
 readConfig();
 
 while (true){
+
 
     // BRIEF EXPLANATION:
     // Two variables control playback. step_seq counts out the number of steps
@@ -412,6 +425,8 @@ while (true){
     }
 
 	}
+	
+	
 } /// END WHILE TRUE
 
 }
@@ -425,7 +440,7 @@ fun void tickTock(int matrix, dur tick_time){
 		if (grid[matrix].swing_state){
 			/// Here second
 			tick_time - grid[matrix].tick_time => now;
-			if (matrix==0)
+			if (matrix==0 && enable_clockpulse==1)
 				spork ~clock_pulse();
 			grid[matrix].swing_state--;
 		
@@ -433,21 +448,21 @@ fun void tickTock(int matrix, dur tick_time){
 			/// Here first
 			(tick_time/maxx)*grid[matrix].swing => grid[matrix].tick_time;
 			tick_time + grid[matrix].tick_time => now;
-			if (matrix==0)
+			if (matrix==0 && enable_clockpulse==1)
 				spork ~clock_pulse();
 			grid[matrix].swing_state++;
 		}
 	} else if (grid[matrix].swing_state) {
 		
 		tick_time - grid[matrix].tick_time => now;
-		if (matrix==0)
+		if (matrix==0 && enable_clockpulse==1)
 			spork ~clock_pulse();		
 		grid[matrix].swing_state--;
 
 	} else {
 		
 		tick_time => now;
-		if (matrix==0)
+		if (matrix==0 && enable_clockpulse==1)
 			spork ~clock_pulse();
 	}
 	
@@ -1247,7 +1262,10 @@ fun void playStep(int matrix, int step) {
 			//spork ~midiController(grid[matrix].channel, grid[matrix].cc2_value, returnCC2(matrix, step));
 
             
-			spork ~midiNote(grid[matrix].channel, note_number, returnVelocity(matrix, step), 1, grid[matrix].time_sync);
+			if (enable_layerpulse == 1 && matrix == pulse_layer){
+				spork ~clock_pulse();
+			} else 
+				spork ~midiNote(grid[matrix].channel, note_number, returnVelocity(matrix, step), 1, grid[matrix].time_sync);
 
             spork ~toggleLED(matrix, step, i);
 
@@ -1274,7 +1292,10 @@ fun void playStep(int matrix, int step) {
 			spork ~midiChPressure(grid[matrix].channel, returnCC2(matrix, step));
 			//spork ~midiController(grid[matrix].channel, grid[matrix].cc2_value, returnCC2(matrix, step));
 
-            spork ~midiNote(grid[matrix].channel, note_number, returnVelocity(matrix, step), x - step, grid[matrix].time_sync);
+			if (enable_layerpulse == 1 && matrix == pulse_layer){
+				spork ~clock_pulse();
+			} else 
+				spork ~midiNote(grid[matrix].channel, note_number, returnVelocity(matrix, step), 1, grid[matrix].time_sync);
 
             spork ~toggleLED(matrix, step, i);
 
@@ -1302,7 +1323,10 @@ fun void playStep(int matrix, int step) {
 			spork ~midiChPressure(grid[matrix].channel, returnCC2(matrix, step));
 			//spork ~midiController(grid[matrix].channel, grid[matrix].cc2_value, returnCC2(matrix, step));
 
-            spork ~midiNote(grid[matrix].channel, note_number, returnVelocity(matrix, step), x - step, grid[matrix].time_sync);
+			if (enable_layerpulse == 1 && matrix == pulse_layer){
+				spork ~clock_pulse();
+			} else 
+				spork ~midiNote(grid[matrix].channel, note_number, returnVelocity(matrix, step), 1, grid[matrix].time_sync);
 
             spork ~toggleLED(matrix,  step, i);
 
@@ -1455,13 +1479,33 @@ fun void midiChPressure(int channel, int value){
 
 fun void pulseMidiClock(){
 	
-	0.5::second / 4 => dur tick_new;
+	float midi_beat;
+	
+	// Crude one-time delay to get Meeq in time
+	0.039::second => dur tick_new;
+	tick_new => now;
 	
 	while (true){
-		tick_new/6 => now;
 		midiClock();
+
+		(bpm*24)/60 => midi_beat;
+		1/midi_beat => midi_beat;
+		
+		midi_beat::second => dur tick_new;
+		
+		tick_new => now;
 	}
 	
+}
+
+fun void midiStartClock(){ 
+	
+	MidiMsg message; 
+	0xfa => message.data1; 
+	0 => message.data2;
+	0 => message.data3; 
+
+	mout.send(message);
 }
 
 fun void midiClock() {
@@ -1794,7 +1838,6 @@ fun int lfo_generator(int which_lfo){
 }
 
 fun void clock_pulse(){
-
 		0 => pulse;
 		50::ms => now;
 		1023 => pulse;
@@ -1852,8 +1895,12 @@ fun void octoModulate(){
 	while (true){
 			//octSend(glfo8,glfo7,glfo6,glfo5,glfo4,glfo3,glfo2,glfo1);
 			// FIX: check for less than 8 LFOs!!
-			//octSend(lfo[7].value,lfo[6].value,lfo[5].value,lfo[4].value,lfo[3].value,lfo[2].value,lfo[1].value,lfo[0].value);
-			octSend(pulse,lfo[6].value,lfo[5].value,lfo[4].value,lfo[3].value,lfo[2].value,lfo[1].value,lfo[0].value);
+			
+			if (enable_clockpulse==1 || enable_layerpulse == 1)
+				octSend(pulse,lfo[6].value,lfo[5].value,lfo[4].value,lfo[3].value,lfo[2].value,lfo[1].value,lfo[0].value);
+			else 
+				octSend(lfo[7].value,lfo[6].value,lfo[5].value,lfo[4].value,lfo[3].value,lfo[2].value,lfo[1].value,lfo[0].value);
+			
 			goct_lat::ms => now; // Octomod update frequency	
 	}
 
