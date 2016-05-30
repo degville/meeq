@@ -1,0 +1,255 @@
+<meeq_config>
+<meeq_version> 1.91 </meeq_version>
+<layer>
+<direction> 1 </direction>
+<steps> 16 </steps>
+<channel_volume> 100 </channel_volume>
+<time_sig> 4 </time_sig>
+<time_sig_table_pos> 3 </time_sig_table_pos>
+<time_sync> 4 </time_sync>
+<channel> 1 </channel>
+<channel> 1 </channel>
+<scale> 1 </scale>
+<transpose> 0 </transpose>
+<transpose_step> 12 </transpose_step>
+<transpose_table_pos> 8 </transpose_table_pos>
+<mute> 0 </mute>
+<cc1_value> 1 </cc1_value>
+<cc2_value> 2 </cc2_value>
+<swing> 0 </swing>
+<swing_state> 0 </swing_state>
+<swing_sync> 0 </swing_sync>
+<matrix> 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000 </matrix>
+</layer>
+<layer>
+<direction> 1 </direction>
+<steps> 16 </steps>
+<channel_volume> 100 </channel_volume>
+<time_sig> 4 </time_sig>
+<time_sig_table_pos> 3 </time_sig_table_pos>
+<time_sync> 4 </time_sync>
+<channel> 2 </channel>
+<channel> 2 </channel>
+<scale> 1 </scale>
+<transpose> 0 </transpose>
+<transpose_step> 12 </transpose_step>
+<transpose_table_pos> 8 </transpose_table_pos>
+<mute> 0 </mute>
+<cc1_value> 1 </cc1_value>
+<cc2_value> 2 </cc2_value>
+<swing> 0 </swing>
+<swing_state> 0 </swing_state>
+<swing_sync> 0 </swing_sync>
+<matrix> 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000 </matrix>
+</layer>
+<layer>
+<direction> 1 </direction>
+<steps> 16 </steps>
+<channel_volume> 100 </channel_volume>
+<time_sig> 4 </time_sig>
+<time_sig_table_pos> 3 </time_sig_table_pos>
+<time_sync> 4 </time_sync>
+<channel> 3 </channel>
+<channel> 3 </channel>
+<scale> 1 </scale>
+<transpose> 0 </transpose>
+<transpose_step> 12 </transpose_step>
+<transpose_table_pos> 8 </transpose_table_pos>
+<mute> 0 </mute>
+<cc1_value> 1 </cc1_value>
+<cc2_value> 2 </cc2_value>
+<swing> 0 </swing>
+<swing_state> 0 </swing_state>
+<swing_sync> 0 </swing_sync>
+<matrix> 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000 </matrix>
+</layer>
+<layer>
+<direction> 1 </direction>
+<steps> 16 </steps>
+<channel_volume> 100 </channel_volume>
+<time_sig> 4 </time_sig>
+<time_sig_table_pos> 3 </time_sig_table_pos>
+<time_sync> 4 </time_sync>
+<channel> 4 </channel>
+<channel> 4 </channel>
+<scale> 1 </scale>
+<transpose> 0 </transpose>
+<transpose_step> 12 </transpose_step>
+<transpose_table_pos> 8 </transpose_table_pos>
+<mute> 0 </mute>
+<cc1_value> 1 </cc1_value>
+<cc2_value> 2 </cc2_value>
+<swing> 0 </swing>
+<swing_state> 0 </swing_state>
+<swing_sync> 0 </swing_sync>
+<matrix> 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000 </matrix>
+</layer>
+<layer>
+<direction> 1 </direction>
+<steps> 16 </steps>
+<channel_volume> 100 </channel_volume>
+<time_sig> 4 </time_sig>
+<time_sig_table_pos> 3 </time_sig_table_pos>
+<time_sync> 4 </time_sync>
+<channel> 5 </channel>
+<channel> 5 </channel>
+<scale> 0 </scale>
+<transpose> 0 </transpose>
+<transpose_step> 12 </transpose_step>
+<transpose_table_pos> 8 </transpose_table_pos>
+<mute> 0 </mute>
+<cc1_value> 1 </cc1_value>
+<cc2_value> 2 </cc2_value>
+<swing> 0 </swing>
+<swing_state> 0 </swing_state>
+<swing_sync> 0 </swing_sync>
+<matrix> 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000 </matrix>
+</layer>
+<layer>
+<direction> 1 </direction>
+<steps> 16 </steps>
+<channel_volume> 100 </channel_volume>
+<time_sig> 4 </time_sig>
+<time_sig_table_pos> 3 </time_sig_table_pos>
+<time_sync> 4 </time_sync>
+<channel> 6 </channel>
+<channel> 6 </channel>
+<scale> 0 </scale>
+<transpose> 0 </transpose>
+<transpose_step> 12 </transpose_step>
+<transpose_table_pos> 8 </transpose_table_pos>
+<mute> 0 </mute>
+<cc1_value> 1 </cc1_value>
+<cc2_value> 2 </cc2_value>
+<swing> 0 </swing>
+<swing_state> 0 </swing_state>
+<swing_sync> 0 </swing_sync>
+<matrix> 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000 </matrix>
+</layer>
+<layer>
+<direction> 1 </direction>
+<steps> 16 </steps>
+<channel_volume> 100 </channel_volume>
+<time_sig> 4 </time_sig>
+<time_sig_table_pos> 3 </time_sig_table_pos>
+<time_sync> 4 </time_sync>
+<channel> 7 </channel>
+<channel> 7 </channel>
+<scale> 7 </scale>
+<transpose> 0 </transpose>
+<transpose_step> 12 </transpose_step>
+<transpose_table_pos> 8 </transpose_table_pos>
+<mute> 0 </mute>
+<cc1_value> 1 </cc1_value>
+<cc2_value> 2 </cc2_value>
+<swing> 0 </swing>
+<swing_state> 0 </swing_state>
+<swing_sync> 0 </swing_sync>
+<matrix> 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000 </matrix>
+</layer>
+<layer>
+<direction> 1 </direction>
+<steps> 16 </steps>
+<channel_volume> 100 </channel_volume>
+<time_sig> 4 </time_sig>
+<time_sig_table_pos> 3 </time_sig_table_pos>
+<time_sync> 4 </time_sync>
+<channel> 8 </channel>
+<channel> 8 </channel>
+<scale> 7 </scale>
+<transpose> 0 </transpose>
+<transpose_step> 12 </transpose_step>
+<transpose_table_pos> 8 </transpose_table_pos>
+<mute> 0 </mute>
+<cc1_value> 1 </cc1_value>
+<cc2_value> 2 </cc2_value>
+<swing> 0 </swing>
+<swing_state> 0 </swing_state>
+<swing_sync> 0 </swing_sync>
+<matrix> 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000 </matrix>
+</layer>
+<layer>
+<direction> 1 </direction>
+<steps> 16 </steps>
+<channel_volume> 100 </channel_volume>
+<time_sig> 4 </time_sig>
+<time_sig_table_pos> 3 </time_sig_table_pos>
+<time_sync> 4 </time_sync>
+<channel> 9 </channel>
+<channel> 9 </channel>
+<scale> 0 </scale>
+<transpose> 0 </transpose>
+<transpose_step> 12 </transpose_step>
+<transpose_table_pos> 8 </transpose_table_pos>
+<mute> 0 </mute>
+<cc1_value> 1 </cc1_value>
+<cc2_value> 2 </cc2_value>
+<swing> 0 </swing>
+<swing_state> 0 </swing_state>
+<swing_sync> 0 </swing_sync>
+<matrix> 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000 </matrix>
+</layer>
+<layer>
+<direction> 1 </direction>
+<steps> 16 </steps>
+<channel_volume> 100 </channel_volume>
+<time_sig> 4 </time_sig>
+<time_sig_table_pos> 3 </time_sig_table_pos>
+<time_sync> 4 </time_sync>
+<channel> 10 </channel>
+<channel> 10 </channel>
+<scale> 9 </scale>
+<transpose> 0 </transpose>
+<transpose_step> 12 </transpose_step>
+<transpose_table_pos> 8 </transpose_table_pos>
+<mute> 0 </mute>
+<cc1_value> 1 </cc1_value>
+<cc2_value> 2 </cc2_value>
+<swing> 0 </swing>
+<swing_state> 0 </swing_state>
+<swing_sync> 0 </swing_sync>
+<matrix> 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000 </matrix>
+</layer>
+<layer>
+<direction> 1 </direction>
+<steps> 16 </steps>
+<channel_volume> 100 </channel_volume>
+<time_sig> 4 </time_sig>
+<time_sig_table_pos> 3 </time_sig_table_pos>
+<time_sync> 4 </time_sync>
+<channel> 11 </channel>
+<channel> 11 </channel>
+<scale> 0 </scale>
+<transpose> 0 </transpose>
+<transpose_step> 12 </transpose_step>
+<transpose_table_pos> 8 </transpose_table_pos>
+<mute> 0 </mute>
+<cc1_value> 1 </cc1_value>
+<cc2_value> 2 </cc2_value>
+<swing> 0 </swing>
+<swing_state> 0 </swing_state>
+<swing_sync> 0 </swing_sync>
+<matrix> 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000 </matrix>
+</layer>
+<layer>
+<direction> 1 </direction>
+<steps> 16 </steps>
+<channel_volume> 100 </channel_volume>
+<time_sig> 4 </time_sig>
+<time_sig_table_pos> 3 </time_sig_table_pos>
+<time_sync> 4 </time_sync>
+<channel> 12 </channel>
+<channel> 12 </channel>
+<scale> 0 </scale>
+<transpose> 0 </transpose>
+<transpose_step> 12 </transpose_step>
+<transpose_table_pos> 8 </transpose_table_pos>
+<mute> 0 </mute>
+<cc1_value> 1 </cc1_value>
+<cc2_value> 2 </cc2_value>
+<swing> 0 </swing>
+<swing_state> 0 </swing_state>
+<swing_sync> 0 </swing_sync>
+<matrix> 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000 </matrix>
+</layer>
+</meeq_config>
