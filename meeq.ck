@@ -26,6 +26,7 @@
 // 
 // 2. Copy the device name within the double quotes into following line:
 //"PLACE DEVICE NAME HERE" => string midioutstring; 
+//"USB Midi Cable" => string midioutstring;
 "IAC Driver IAC 1" => string midioutstring;
 //"BCF2000 Port 3"  => string midioutstring;
 //
@@ -41,12 +42,12 @@
 
 //
 // 4. Set the global tempo for meeq by changing 120 in the following line:
-120 => int bpm;
+96 => int bpm;
 //
 // 5. Run MonomeSerial and set the prefix to /meeq
 //
 //
-0 => int enable_octomod;
+1 => int enable_octomod;
 //
 // 6. Type 'chuck meeq_v1.ck' on the command-line to run the sequencer.
 //
@@ -208,8 +209,8 @@ recv.event(prefix+"/enc", "ii") @=> OscEvent enc;
 1 => grid[2].scale; 
 1 => grid[3].scale; 
 9 => grid[9].scale;     // MIDI Drums
+7 => grid[6].scale;     // Ableton Drums
 7 => grid[7].scale;     // Ableton Drums
-8 => grid[8].scale;     // Ableton Drums
 
 /// INITIAL LAYER SWING LEVELS
 //1 => grid[0].swing;
@@ -225,6 +226,7 @@ int matrix_buffer[maxx][maxy];
 
 time timeMatrix[maxx][maxy];
 
+1023 => int pulse;
 	
 ///Set velocity lookup table
 int velocity_table[];
@@ -263,6 +265,7 @@ for (0 => int i; i<16; i++){
 // Configuration for sending voltages from LFOs to Greg Surges' Octomod
 
 10 => int goct_lat;	// Update latency	 
+
 // Octomod - Send
 "localhost" => string omhost;
 9999 => int omhostport;				/// CHANGE FOR YOUR SETUP: Octomod OSC Port
@@ -364,9 +367,12 @@ while (true){
 
     }
     
-	// Decide whether the probability setting means we skip this step
-	if (( maxy == grid[matrix].prb_steps[i] ) ||
-	   ( Std.rand2(1, maxy) <= grid[matrix].prb_steps[i])) {
+	// Decide whether the probability setting
+	// and the 'skip' step flag means we skip this step
+	
+	if ((( maxy == grid[matrix].prb_steps[i] ) ||				// Probability
+	   ( Std.rand2(1, maxy) <= grid[matrix].prb_steps[i])) &&
+	   (!grid[matrix].skip_steps[i])) {							// Skip steps
 
     // Play the notes for current step
 	if (!mute)
@@ -419,22 +425,30 @@ fun void tickTock(int matrix, dur tick_time){
 		if (grid[matrix].swing_state){
 			/// Here second
 			tick_time - grid[matrix].tick_time => now;
+			if (matrix==0)
+				spork ~clock_pulse();
 			grid[matrix].swing_state--;
 		
 		} else {
 			/// Here first
 			(tick_time/maxx)*grid[matrix].swing => grid[matrix].tick_time;
 			tick_time + grid[matrix].tick_time => now;
+			if (matrix==0)
+				spork ~clock_pulse();
 			grid[matrix].swing_state++;
 		}
 	} else if (grid[matrix].swing_state) {
 		
-		tick_time - grid[matrix].tick_time => now;		
+		tick_time - grid[matrix].tick_time => now;
+		if (matrix==0)
+			spork ~clock_pulse();		
 		grid[matrix].swing_state--;
 
 	} else {
 		
 		tick_time => now;
+		if (matrix==0)
+			spork ~clock_pulse();
 	}
 	
 }
@@ -528,7 +542,8 @@ fun void overlayGesturePage1(){			// Overlay: general
 		grid[current_matrix].channel => int mchannel; 
 		clearDisplay();
 		overlayRowOne(0,current_matrix);
-		overlayRow(key_step_size[1],grid[current_matrix].steps);
+		//overlayRow(key_step_size[1],grid[current_matrix].steps);
+		overlaySkipSteps(key_step_size[1],current_matrix);
 		overlayRow(key_time[1],grid[current_matrix].time_sig_table_pos);
 		overlayRow(key_volume[1],midiChannel[mchannel].volume);
 		overlayRow(key_transpose[1],grid[current_matrix].transpose_table_pos);
@@ -719,12 +734,39 @@ fun void overlayMode2(int x, int y, int state){
 			0 => overlay_flag;
 			0 => gesture_flag;
 			
-	} else if (y == key_mute[1]){		/// ALTER LFO FREQUENCY
+	} else if ((y == key_layer_0[1]) && (x == key_layer_0[0]))
+			0 => grid[current_matrix].lfo; /// Switch LFO used by current grid
+
+	else if ((y == key_layer_1[1]) && (x == key_layer_1[0]))
+			1 => grid[current_matrix].lfo;
+
+	else if ((y == key_layer_2[1]) && (x == key_layer_2[0]))
+			2 => grid[current_matrix].lfo;
+
+	else if ((y == key_layer_3[1]) && (x == key_layer_3[0]))
+			3 => grid[current_matrix].lfo;
+
+	else if ((y == key_layer_4[1]) && (x == key_layer_4[0]))
+			4 => grid[current_matrix].lfo;
+
+	else if ((y == key_layer_5[1]) && (x == key_layer_5[0]))
+			5 => grid[current_matrix].lfo;
+
+	else if ((y == key_layer_6[1]) && (x == key_layer_6[0]))
+			6 => grid[current_matrix].lfo;
+
+	else if ((y == key_layer_7[1]) && (x == key_layer_7[0]))
+			7 => grid[current_matrix].lfo;
+
+	else if ((y == key_layer_8[1]) && (x == key_layer_8[0]))
+			8 => grid[current_matrix].lfo;		
+			
+	else if (y == key_mute[1])		/// ALTER LFO FREQUENCY
 		  	(((x+1)*2)/5.0)*(60.0/bpm) => lfo[current_matrix].frequency;
 
-	} else if (y == key_swing[1]){		/// ALTER LFO TYPE
+	else if (y == key_swing[1])		/// ALTER LFO TYPE
 			x => lfo[current_matrix].type;
-	}			
+							
 }
 
 fun void overlayMode4(int x, int y, int state){
@@ -1052,6 +1094,16 @@ fun void layerMute(int current_matrix, int x){
 }
 
 fun void stepResize(int matrix, int x){
+
+		if (grid[matrix].skip_steps[x])
+			0 => grid[matrix].skip_steps[x];
+		else
+			1 => grid[matrix].skip_steps[x];
+				
+		overlaySkipSteps(key_step_size[1], matrix);
+}
+
+fun void stepResize_old(int matrix, int x){
 
     x+1 => grid[matrix].steps;
 
@@ -1521,6 +1573,20 @@ fun void overlayMutedLayers(int row){
 	}
 }
 
+fun void overlaySkipSteps(int row, int matrix){
+	
+	for (0 => int x; x< maxx; x++){
+
+		if (grid[matrix].skip_steps[x]){
+			ledSet(x, row, 0);
+			0 => overlayMatrix[x][row];
+		} else {
+			ledSet(x, row, 1);
+			1 => overlayMatrix[x][row];
+		}	
+	}
+}
+
 fun void overlayRowOne(int row, int value){
 
 	for (0=> int x; x< maxx; x++){
@@ -1727,6 +1793,13 @@ fun int lfo_generator(int which_lfo){
 	}	
 }
 
+fun void clock_pulse(){
+
+		0 => pulse;
+		50::ms => now;
+		1023 => pulse;
+}
+
 fun void lfo_sampler(int maxlfo){
 	
 	0.001953125 => float step_multiplier; // 0.001953125 * 512 = 1
@@ -1779,7 +1852,8 @@ fun void octoModulate(){
 	while (true){
 			//octSend(glfo8,glfo7,glfo6,glfo5,glfo4,glfo3,glfo2,glfo1);
 			// FIX: check for less than 8 LFOs!!
-			octSend(lfo[7].value,lfo[6].value,lfo[5].value,lfo[4].value,lfo[3].value,lfo[2].value,lfo[1].value,lfo[0].value);
+			//octSend(lfo[7].value,lfo[6].value,lfo[5].value,lfo[4].value,lfo[3].value,lfo[2].value,lfo[1].value,lfo[0].value);
+			octSend(pulse,lfo[6].value,lfo[5].value,lfo[4].value,lfo[3].value,lfo[2].value,lfo[1].value,lfo[0].value);
 			goct_lat::ms => now; // Octomod update frequency	
 	}
 
@@ -1836,6 +1910,10 @@ public class noteGrid{
 	
 	dur tick_time;
 	int lfo_value[maxx];
+	
+	int skip_steps[maxx];				// Trigger for whether a step is played
+	for (0=> int i; i < maxx; i++)
+		0 => skip_steps[i];
 
 	int velocity_steps[maxx];	
 	for (0=> int i; i < maxx; i++)
