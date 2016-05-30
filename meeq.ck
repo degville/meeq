@@ -50,9 +50,7 @@
 // END OF QUICK SETUP INSTRUCTIONS
 
 /// Button Configuration (x, y)
-[maxx-1,0] @=> int key_clear_pattern[];
-[maxx-2,0] @=> int key_random[];  // Replaced by improbability mode
-
+[maxx-2,0] @=> int key_random[];
 [maxx-3,0] @=> int key_forwards[];
 [maxx-4,0] @=> int key_backwards[];
 [maxx-1,1] @=> int key_step_size[];
@@ -65,10 +63,12 @@
 [maxx-1,7] @=> int key_mute[];
 
 /// Button Configuration for overlays
-[maxx-1,4] @=> int key_lfo[];	// LFO modulation amount layer
-[maxx-1,5] @=> int key_prb[];  	// Probability layer
-[maxx-1,6] @=> int key_cc1[];	// MIDI Control Layer 1
-[maxx-1,7] @=> int key_cc2[];	// MIDI Control Layer 2
+[maxx-1,0] @=> int key_clear_pattern[];	// Global settings overlay
+[maxx-1,1] @=> int key_glfo[];			// Global LFO settings
+[maxx-1,4] @=> int key_lfo[];			// LFO modulation amount layer
+[maxx-1,5] @=> int key_prb[]; 		 	// Probability layer
+[maxx-1,6] @=> int key_cc1[];			// MIDI Control Layer 1
+[maxx-1,7] @=> int key_cc2[];			// MIDI Control Layer 2
 
 /// Button Configuration for layer switching
 [0,0]   @=> int key_layer_0[];
@@ -467,6 +467,8 @@ fun void interpretPress(int x, int y){
 		/// if gesture is an overlay
 		if ((y == key_clear_pattern[1]) && (x == key_clear_pattern[0])){
 			overlayGesturePage1();
+		} else if ((y == key_glfo[1]) && (x == key_glfo[0])){
+			overlayGesturePage2();	 
 		} else if ((y == key_volume[1]) && (x == key_volume[0])){
 			overlayGesturePage4();
 		} else if ((y == key_lfo[1]) && (x == key_lfo[0])){
@@ -508,6 +510,18 @@ fun void overlayGesturePage1(){			// Overlay: general
 	
 }
 
+fun void overlayGesturePage2(){			// Overlay: global LFO settings
+	
+	2 => overlay_flag;
+	
+	//clearDisplay();
+	
+	while (overlay_flag==2){	
+		lfoDisplayEdit();
+		20::ms => now;	
+	}
+}
+
 fun void overlayGesturePage4(){			// Overlay: volume
 	
 	4 => overlay_flag;
@@ -517,17 +531,33 @@ fun void overlayGesturePage4(){			// Overlay: volume
 
 }
 
-fun void overlayGesturePage5(){			// Overlay: LFO modulation
+fun void overlayGesturePage5(){			// Overlay: per-step LFO modulation amount
 	
 	5 => overlay_flag;
 		
 	while (overlay_flag==5){
 	
-		spork ~lfoDisplayUpdate();
+	//spork ~lfoDisplayUpdate();
+	lfoDisplayUpdate();
 	
 	20::ms => now;
 	
 	}
+}
+
+fun void lfoDisplayEdit(){
+	
+	0 => int binary_send;
+	0.001953125 => float step_multiplier; // 0.001953125 * 512 = 1
+		
+	for (0=> int x; x<maxx; x++){				
+		Math.pow(2,(lfo1_table[x]/(1024/maxy))) $ int +=> binary_send;
+		1 -=> binary_send;			// Reverse display 
+		0xff ^=> binary_send; 		// so that waveform appears correctly		
+		columnSet(x, binary_send);
+		0 => binary_send;
+	}
+
 }
 
 fun void lfoDisplayUpdate(){
@@ -584,8 +614,6 @@ fun void lfo_backgroundUpdate(){
 	}
 }
 
-
-
 fun void overlayGesturePage6(){			// Overlay: probability layer
 	
 	6 => overlay_flag;
@@ -616,8 +644,10 @@ fun void overlayGesturePage8(){			// Overlay: cc2
 fun void interpretGesture(int x, int y, int state){		// Key control while in Overlay mode
 
 	/// Deal with overlay gestures first
-	if (overlay_flag == 1){					// Global options
-		overlayMode1(x,y,state);
+	if (overlay_flag == 1){					
+		overlayMode1(x,y,state);			// Global options
+	} else if (overlay_flag == 2){
+		overlayMode2(x,y,state);			// Global LFO		
 	} else if (overlay_flag == 4){
 		overlayMode4(x,y,state);			// Step velocity
 	} else if (overlay_flag == 5){
@@ -713,6 +743,23 @@ fun void overlayMode1(int x, int y, int state){
 	else if ((y == key_random[1]) && (x == key_random[0]))
 		2 => grid[current_matrix].direction; /// RANDOM SEQUENCE
 				
+}
+
+fun void overlayMode2(int x, int y, int state){
+	
+	if (state==0)	
+	if ((y == key_glfo[1]) && (x == key_glfo[0])){
+
+			clearDisplay();
+			drawDisplay();
+			0 => overlay_flag;
+			0 => gesture_flag;
+			
+	} else if (y == key_mute[1]){		/// ALTER STEP SIZE
+		(x * 0.5) => float glfo1_f;
+	}
+			
+		
 }
 
 fun void overlayMode4(int x, int y, int state){
