@@ -755,11 +755,11 @@ fun void overlayMode2(int x, int y, int state){
 			0 => overlay_flag;
 			0 => gesture_flag;
 			
-	} else if (y == key_mute[1]){		/// ALTER STEP SIZE
-		(x * 0.5) => float glfo1_f;
+	} else if (y == key_mute[1]){		/// ALTER LFO FREQUENCY
+		  ((x+1.0)/2.0)*(60.0/bpm) => glfo1_f;
+
 	}
 			
-		
 }
 
 fun void overlayMode4(int x, int y, int state){
