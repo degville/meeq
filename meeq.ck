@@ -45,6 +45,9 @@
 //
 // 5. Run MonomeSerial and set the prefix to /meeq
 //
+//
+0 => int enable_octomod;
+//
 // 6. Type 'chuck meeq_v1.ck' on the command-line to run the sequencer.
 //
 // END OF QUICK SETUP INSTRUCTIONS
@@ -88,7 +91,9 @@
 [maxx-5, 0]   @=> int key_layer_11[];
 
 // Default values for oscillators - starting value and freq (Hz)
+50 => int glfo_sample_latency;
 0 => int glfo1;		
+0 => int glfo1_t;
 0.5 => float glfo1_f;
 
 int lfo1_table[maxx];
@@ -124,7 +129,6 @@ int rate, position;
 
 mChannel midiChannel[16];
 noteGrid grid[layers];
-
 
 /// Deal with command-line arguments (probably sent from the GUI)
 /// for example: maxx:maxy:osc send:osc recv:midi device:bpm:cc1:cc2
@@ -239,6 +243,21 @@ for (0 => int i; i<16; i++){
 	midiChannel[i].volume => int y;
 	midiController(i, 7, volume_table[y]);
 
+}
+
+// Octomod setup for voltage control
+// Configuration for sending voltages from LFOs to Greg Surges' Octomod
+
+10 => int goct_lat;	// Update latency	 
+// Octomod - Send
+"localhost" => string omhost;
+9999 => int omhostport;				/// CHANGE FOR YOUR SETUP: Octomod OSC Port
+"/dac" => string omprefix;
+OscSend oemit;
+
+if (enable_octomod){		
+	oemit.setHost(omhost, omhostport);
+	spork ~octoModulate();
 }
 
 clearDisplay();
@@ -537,10 +556,9 @@ fun void overlayGesturePage5(){			// Overlay: per-step LFO modulation amount
 		
 	while (overlay_flag==5){
 	
-	//spork ~lfoDisplayUpdate();
-	lfoDisplayUpdate();
+		lfoDisplayUpdate();
 	
-	20::ms => now;
+		20::ms => now;
 	
 	}
 }
@@ -756,10 +774,11 @@ fun void overlayMode2(int x, int y, int state){
 			0 => gesture_flag;
 			
 	} else if (y == key_mute[1]){		/// ALTER LFO FREQUENCY
-		  ((x+1.0)/2.0)*(60.0/bpm) => glfo1_f;
+		  	((x+1.0)/5.0)*(60.0/bpm) => glfo1_f;
 
-	}
-			
+	} else if (y == key_swing[1]){		/// ALTER LFO TYPE
+			x => glfo1_t;
+	}			
 }
 
 fun void overlayMode4(int x, int y, int state){
@@ -1584,43 +1603,106 @@ fun void readConfig(){
     //chout <= tok.next() <= IO.newline();    
     
 	}
-
-
 }
 
 fun int lfo1(){
 	
+	1 => int direction;
+	
 	while (true){
 
-		for (0=> int i; i<900; i++){
-		
-			((Math.sin ((i/10)*3.14159265/180)) * 512 + 512-1) $ int => glfo1;
-			1/glfo1_f => float div_click;
-			div_click*0.27777777::ms => now;
-		}
-	
-		for (900=> int i; i>0; i--){
-		
-			((Math.sin ((i/10)*3.14159265/180)) * 512 + 512-1) $ int => glfo1;
-			1/glfo1_f => float div_click;
-			div_click*0.27777777::ms => now;
-		}
-		
-		for (0=> int i; i<900; i++){
-		
-			((Math.sin ((i/10)* -3.14159265/180)) * 512 + 512) $ int => glfo1;
-			1/glfo1_f => float div_click;
-			div_click*0.27777777::ms => now;
-		}
-		
-		for (900=> int i; i>0; i--){
-		
-			((Math.sin ((i/10)* -3.14159265/180)) * 512 + 512) $ int => glfo1;
-			1/glfo1_f => float div_click;
-			div_click*0.27777777::ms => now;
-			//((1/glfo1_f)/4)::second => now;
-		}
+		if (glfo1_t==0){			/// Sine function
 
+			for (0=> int i; i<900; i++){
+		
+				((Math.sin ((i/10)*3.14159265/180)) * 512 + 512-1) $ int => glfo1;
+				1/glfo1_f => float div_click;
+				div_click*0.27777777::ms => now;
+			}
+	
+			for (900=> int i; i>0; i--){
+		
+				((Math.sin ((i/10)*3.14159265/180)) * 512 + 512-1) $ int => glfo1;
+				1/glfo1_f => float div_click;
+				div_click*0.27777777::ms => now;
+			}
+		
+			for (0=> int i; i<900; i++){
+		
+				((Math.sin ((i/10)* -3.14159265/180)) * 512 + 512) $ int => glfo1;
+				1/glfo1_f => float div_click;
+				div_click*0.27777777::ms => now;
+			}
+		
+			for (900=> int i; i>0; i--){
+		
+				((Math.sin ((i/10)* -3.14159265/180)) * 512 + 512) $ int => glfo1;
+				1/glfo1_f => float div_click;
+				div_click*0.27777777::ms => now;
+
+			}
+		} else if (glfo1_t==1) {	/// Triangle function
+
+				if (direction){
+
+					if (glfo1 < 1023){
+						glfo1 + 1 => glfo1;
+					} else {
+						0 => direction;			
+					}
+				} else {
+					if (glfo1 > 0){
+						glfo1 - 1 => glfo1;
+					} else {
+						1 => direction;
+
+					}			
+				}
+
+			1/glfo1_f => float div_click;
+			div_click * 0.48828125::ms => now;
+	
+		} else if (glfo1_t==2) {	/// Sawtooth function
+			
+			if (glfo1 < 1023){
+					glfo1 + 1 => glfo1;
+				} else {
+					0 => glfo1;			
+				}
+
+			1/glfo1_f => float div_click;
+			div_click * 0.9765625::ms => now;
+			
+		} else if (glfo1_t==3) {	/// Reverse Sawtooth function
+
+				if (glfo1 > 0){
+						glfo1 - 1 => glfo1;
+					} else {
+						1023 => glfo1;			
+					}
+
+				1/glfo1_f => float div_click;
+				div_click * 0.9765625::ms => now;
+
+			} else {				/// Square function
+		
+			if (direction > 2000){
+				1 => direction;
+			}
+
+			if (direction < 1000){
+				1023 => glfo1;
+
+			} else {
+				0 => glfo1;			
+			}
+
+			direction + 1 => direction;
+
+			1/glfo1_f => float div_click;
+			div_click * 0.5::ms => now;
+			
+		}
 	}	
 }
 
@@ -1659,10 +1741,37 @@ fun void lfo_sampler(){
 				}
 			}
 		}
-		(30/glfo1_f)::ms => now;
+		(glfo_sample_latency/glfo1_f)::ms => now;
 
 	}
 		
+}
+
+/// Colate data for Octomod at latency intervals and send OSC data to Send routine
+fun void octoModulate(){
+	
+	while (true){
+			//octSend(glfo8,glfo7,glfo6,glfo5,glfo4,glfo3,glfo2,glfo1);
+			octSend(glfo1,glfo1,glfo1,glfo1,glfo1,glfo1,glfo1,glfo1);
+			goct_lat::ms => now; // Octomod update frequency	
+	}
+
+}
+
+/// Send data to Octomod
+fun void octSend(int oa, int ob, int oc, int od, int oe, int of, int og, int oh){
+	
+	oemit.startMsg(omprefix, "iiiiiiii");
+	
+	oa => oemit.addInt;
+    ob => oemit.addInt;
+    oc => oemit.addInt;
+	od => oemit.addInt;
+    oe => oemit.addInt;
+    of => oemit.addInt;
+	og => oemit.addInt;
+	oh => oemit.addInt;
+
 }
 
 public class noteGrid{
