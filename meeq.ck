@@ -1586,11 +1586,12 @@ fun void ledSet(int x,int y,int s){
     s => xmit.addInt;
 }
 
-fun void columnSet(int x,int y){
-
-    xmit.startMsg(prefix+"/grid/led/col", "ii");
+fun void columnSet(int x,int s){
+ 
+    xmit.startMsg(prefix+"/grid/led/col", "iii");
     x => xmit.addInt;
-    y => xmit.addInt;
+    0 => xmit.addInt;
+    s => xmit.addInt;
 }
 
 fun void clearDisplay(){
